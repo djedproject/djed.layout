@@ -15,6 +15,7 @@ install_requires = [
 tests_require = install_requires + [
     'nose',
     'pyramid_chameleon',
+    'webtest',
     ]
 
 
