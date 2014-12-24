@@ -12,6 +12,8 @@ from pyramid.location import lineage
 from pyramid.registry import Introspectable
 from pyramid.renderers import RendererHelper
 from pyramid.interfaces import IRequest, IResponse, IRouteRequest
+from pyramid.tweens import EXCVIEW
+
 
 log = logging.getLogger('djed.layout')
 
@@ -183,8 +185,6 @@ class LayoutRenderer(object):
         for layout, layoutcontext in chain:
             if layout.view is not None:
                 vdata = layout.view(layoutcontext, request)
-                if IResponse.providedBy(vdata):
-                    return vdata
                 if vdata is not None:
                     value.update(vdata)
 
@@ -206,41 +206,6 @@ class LayoutRenderer(object):
 
 def set_layout_data(request, **kw):
     request.layout_data.update(kw)
-
-
-class layout(RendererHelper):
-
-    package = None
-    renderer = None
-    type = 'djed:layout'
-
-    def __init__(self, name='', layout=''):
-        self.name = name
-        self.layout_name = layout
-
-    def render(self, value, system_values, request=None):
-        renderer = self.renderer
-        context = system_values.get('context', None)
-        try:
-            layout = self.layout
-            registry = self.registry
-        except AttributeError:
-            layout = self.layout = LayoutRenderer(self.layout_name)
-            registry = self.registry = request.registry
-            if self.name:
-                renderer = self.renderer = RendererHelper(
-                    self.name, registry=registry)
-
-        if renderer:
-            value = renderer.render(value, system_values, request)
-
-        return layout(value, context, request)
-
-    def render_to_response(self, value, system_values, request=None):
-        result = self.render(value, system_values, request=request)
-        if IResponse.providedBy(result):
-            return result
-        return self._make_response(result, request)
 
 
 class layout_config(object):
@@ -268,7 +233,39 @@ class layout_config(object):
         return wrapped
 
 
+class layout_tween_factory(object):
+    def __init__(self, handler, registry):
+        self.handler = handler
+        self.registry = registry
+
+    def __call__(self, request):
+        response = self.handler(request)
+
+        layout_name = getattr(request, 'layout', None)
+        if layout_name:
+            layout = LayoutRenderer(layout_name)
+            response.text = layout(response.text, request.context, request)
+            
+        return response
+
+
+class layout_predicate_factory(object):
+    def __init__(self, val, config):
+        self.val = val
+
+    def text(self):
+        return 'layout = %s' % (self.val,)
+
+    phash = text
+
+    def __call__(self, context, request):
+        request.layout = self.val
+        return True
+
+
 def includeme(config):
+    config.add_tween('djed.layout.layout_tween_factory', over=EXCVIEW)
+    config.add_view_predicate('layout', layout_predicate_factory)
     config.add_directive('add_layout', add_layout)
     config.add_request_method(set_layout_data, 'set_layout_data')
 

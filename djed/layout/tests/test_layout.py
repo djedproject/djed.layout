@@ -237,55 +237,39 @@ class TestLayout(BaseTestCase):
         self.assertIn('<!-- layout:', str(res))
         self.assertIn('<h1>text</h1>', str(res))
 
-    @mock.patch('djed.layout.random')
-    def test_layout_renderer(self, m):
-        import djed.layout
-
-        m.choice.return_value = 'red'
+    def test_layout_renderer(self):
 
         self.config.add_layout('test', view=View,
                                renderer='djed.layout:tests/test-layout.pt')
         self.config.add_view(
             name='view.html',
-            renderer=djed.layout.layout('djed.layout:tests/view.pt', 'test'))
+            renderer='djed.layout:tests/view.pt',
+            layout='test')
 
-        from pyramid.view import render_view_to_response
+        app = self.make_app()
 
-        res1 = render_view_to_response(Context(), self.request, 'view.html')
-        res2 = render_view_to_response(Context(), self.request, 'view.html')
+        res1 = app.get('/view.html')
+        res2 = app.get('/view.html')
+
         self.assertEqual(res1.text, res2.text)
         self.assertEqual('<div><h1>Test</h1></div>', res1.text.strip())
 
     def test_layout_renderer_no_template(self):
-        import djed.layout
-        from pyramid.view import render_view_to_response
+        from pyramid.response import Response
 
         def view(request):
-            return 'test'
+            return Response('test')
 
         self.config.add_view(
-            name='view.html', view=view, renderer=djed.layout.layout())
+            name='view.html', view=view, layout='test')
         self.config.add_layout(
-            '', view=View, renderer='djed.layout:tests/test-layout.pt')
+            'test', view=View, renderer='djed.layout:tests/test-layout.pt')
 
-        res = render_view_to_response(Context(), self.request, 'view.html')
+        app = self.make_app()
+
+        res = app.get('/view.html')
+
         self.assertEqual('<div>test</div>', res.text.strip())
-
-    def test_layout_return_response(self):
-        import djed.layout
-        from pyramid.view import render_view_to_response
-        from pyramid.httpexceptions import HTTPFound
-
-        def view(request):
-            return HTTPFound(location='/')
-
-        self.config.add_view(
-            name='view.html', renderer=djed.layout.layout())
-        self.config.add_layout(
-            '', view=view, renderer='djed.layout:tests/test-layout.pt')
-
-        res = render_view_to_response(Context(), self.request, 'view.html')
-        self.assertIsInstance(res, HTTPFound)
 
     def test_layout_renderer_layout_info(self):
 
