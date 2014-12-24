@@ -226,17 +226,6 @@ class TestLayout(BaseTestCase):
 
         self.assertIs(res, o)
 
-    def test_layout_renderer_layout_debug(self):
-        self.config.add_layout('test', view=View,
-                               renderer='djed.layout:tests/test-layout.pt')
-        self.request.__layout_debug__ = True
-
-        rendr = LayoutRenderer('test')
-        res = rendr('<h1>text</h1>', Context(), self.request)
-
-        self.assertIn('<!-- layout:', str(res))
-        self.assertIn('<h1>text</h1>', str(res))
-
     def test_layout_renderer(self):
 
         self.config.add_layout('test', view=View,
@@ -270,22 +259,6 @@ class TestLayout(BaseTestCase):
         res = app.get('/view.html')
 
         self.assertEqual('<div>test</div>', res.text.strip())
-
-    def test_layout_renderer_layout_info(self):
-
-        self.config.add_layout('test')
-        self.config.add_layout('test2', view=View)
-
-        rendr = LayoutRenderer('test')
-        l = query_layout(Root(), Context(), self.request, 'test')[0]
-        res = rendr.layout_info(l, Context(), self.request, 'content')
-        self.assertIn('"layout-factory": "None"', res)
-        self.assertIn('content</div>', res)
-
-        rendr = LayoutRenderer('test2')
-        l = query_layout(Root(), Context(), self.request, 'test2')[0]
-        res = rendr.layout_info(l, Context(), self.request, 'content')
-        self.assertIn('"layout-factory": "test_layout.View"', res)
 
     def test_query_layout_no_request_iface(self):
 

@@ -147,31 +147,6 @@ class LayoutRenderer(object):
     def __init__(self, layout):
         self.layout = layout
 
-    def layout_info(self, layout, context, request, content,
-                    colors=('green','blue','yellow','gray','black')):
-        intr = layout.intr
-        view = intr['view']
-        if view is not None:
-            layout_factory = '%s.%s'%(view.__module__, view.__name__)
-        else:
-            layout_factory = 'None'
-
-        data = OrderedDict(
-            (('name', intr['name']),
-             ('parent-layout', intr['parent']),
-             ('layout-factory', layout_factory),
-             ('renderer', intr['renderer']),
-             ('context', '%s.%s'%(context.__class__.__module__,
-                                  context.__class__.__name__)),
-             ('context-path', request.resource_url(context)),
-             ))
-
-        content = text_('\n<!-- layout:\n%s \n-->\n'\
-                        '<div style="border: 2px solid %s">%s</div>')%(
-            json.dumps(data, indent=2), random.choice(colors), content)
-
-        return content
-
     def __call__(self, content, context, request):
         chain = query_layout_chain(request.root, context, request, self.layout)
         if not chain:
@@ -196,10 +171,6 @@ class LayoutRenderer(object):
                       'wrapped_content': content}
 
             content = layout.renderer.render(value, system, request)
-
-            if getattr(request, '__layout_debug__', False):
-                content = self.layout_info(
-                    layout, layoutcontext, request, content)
 
         return content
 
