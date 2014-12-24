@@ -1,17 +1,13 @@
-import sys
-import json
 import logging
-import random
 import venusian
 from collections import namedtuple
-from collections import OrderedDict
 from zope.interface import providedBy, Interface
-from pyramid.compat import text_, string_types
+from pyramid.compat import string_types
 from pyramid.config.views import DefaultViewMapper
 from pyramid.location import lineage
 from pyramid.registry import Introspectable
 from pyramid.renderers import RendererHelper
-from pyramid.interfaces import IRequest, IResponse, IRouteRequest
+from pyramid.interfaces import IRequest, IRouteRequest
 from pyramid.tweens import EXCVIEW
 
 
