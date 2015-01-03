@@ -1,6 +1,10 @@
+import re
+import json
 import logging
+import random
 import venusian
 from collections import namedtuple
+from collections import OrderedDict
 from zope.interface import providedBy, Interface
 from pyramid.compat import string_types
 from pyramid.config.views import DefaultViewMapper
@@ -143,6 +147,41 @@ class LayoutRenderer(object):
     def __init__(self, layout):
         self.layout = layout
 
+    def layout_info(self, layout, context, request, content):
+        intr = layout.intr
+        view = intr['view']
+        if view is not None:
+            layout_factory = '%s.%s'%(view.__module__, view.__name__)
+        else:
+            layout_factory = 'None'
+
+        data = OrderedDict(
+            (('name', intr['name']),
+             ('parent-layout', intr['parent']),
+             ('layout-factory', layout_factory),
+             ('renderer', intr['renderer']),
+             ('context', '%s.%s'%(context.__class__.__module__,
+                                  context.__class__.__name__)),
+             ('context-path', request.resource_url(context)),
+             ))
+
+        html = re.search('<html\.*>', content)
+        color = random.randint(0,0xFFFFFF)
+
+        if html:
+            pos = html.end() - 1
+            content = ('{0} style="border: 2px solid #{1:06x}" title="{2}"'
+                       '{3}').format(content[:pos], color, data['name'],
+                                     content[pos:])
+        else:
+            content = ('<div style="border: 2px solid #{0:06x}" title="{1}">'
+                       '{2}</div>').format(color, data['name'], content)
+
+        content = '\n<!-- layout:\n{0} \n-->\n{1}'.format(
+            json.dumps(data, indent=2), content)
+
+        return content
+
     def __call__(self, content, context, request):
         chain = query_layout_chain(request.root, context, request, self.layout)
         if not chain:
@@ -167,6 +206,10 @@ class LayoutRenderer(object):
                       'wrapped_content': content}
 
             content = layout.renderer.render(value, system, request)
+
+            if request.registry.settings.get('djed.layout.debug'):
+                content = self.layout_info(
+                    layout, layoutcontext, request, content)
 
         return content
 
@@ -212,7 +255,7 @@ class layout_tween_factory(object):
         if layout_name:
             layout = LayoutRenderer(layout_name)
             response.text = layout(response.text, request.context, request)
-            
+
         return response
 
 
@@ -231,6 +274,12 @@ class layout_predicate_factory(object):
 
 
 def includeme(config):
+    from pyramid.settings import asbool
+
+    settings = config.registry.settings
+    settings['djed.layout.debug'] = asbool(settings.get(
+        'djed.layout.debug', 'f'))
+
     config.add_tween('djed.layout.layout_tween_factory', over=EXCVIEW)
     config.add_view_predicate('layout', layout_predicate_factory)
     config.add_directive('add_layout', add_layout)
