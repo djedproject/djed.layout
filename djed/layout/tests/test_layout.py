@@ -22,7 +22,7 @@ class TestLayout(BaseTestCase):
 
     def test_default_settings(self):
 
-        self.assertFalse(self.registry.settings['djed.laouyt.debug'])
+        self.assertFalse(self.registry.settings['djed.layout.debug'])
 
     def test_layout_register_simple(self):
 
