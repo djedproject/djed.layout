@@ -12,7 +12,7 @@ install_requires = [
     'pyramid',
 ]
 
-tests_require = install_requires + [
+tests_require = [
     'nose',
     'pyramid_chameleon',
     'webtest',
@@ -23,7 +23,7 @@ setup(
     name='djed.layout',
     version='0.0',
     description='djed.layout',
-    long_description=README + '\n\n' + CHANGES,
+    long_description='\n\n'.join([README, CHANGES]),
     classifiers=[
         "Framework :: Pyramid",
         "Intended Audience :: Developers",
@@ -41,6 +41,8 @@ setup(
     packages=['djed.layout'],
     include_package_data=True,
     install_requires=install_requires,
-    tests_require=tests_require,
+    extras_require={
+        'testing': tests_require,
+    },
     test_suite='nose.collector',
 )
