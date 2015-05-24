@@ -6,7 +6,7 @@ from pyramid.interfaces import IRequest, IRouteRequest
 
 from djed.layout import query_layout
 from djed.layout import LayoutRenderer
-from base import BaseTestCase
+from .base import BaseTestCase
 
 class View(object):
 
@@ -51,7 +51,7 @@ class TestLayout(BaseTestCase):
 
         self.config.add_layout(
             'test', context=Context,
-            renderer='djed.layout:tests/test-layout-html.pt')
+            renderer='tests:test-layout-html.pt')
 
         renderer = LayoutRenderer('test')
         res = renderer('View: test', Context(), self.request)
@@ -85,10 +85,10 @@ class TestLayout(BaseTestCase):
     def test_layout_simple_chain_multi_level(self):
 
         self.config.add_layout(
-            'test', parent='.', renderer='djed.layout:tests/test-layout.pt')
+            'test', parent='.', renderer='tests:test-layout.pt')
         self.config.add_layout(
             '', context=Root, parent=None,
-            renderer='djed.layout:tests/test-layout-html.pt')
+            renderer='tests:test-layout-html.pt')
 
         root = Root()
         context = Context(root)
@@ -101,10 +101,10 @@ class TestLayout(BaseTestCase):
 
         self.config.add_layout(
             '', context=Context, parent='.',
-            renderer='djed.layout:tests/test-layout.pt')
+            renderer='tests:test-layout.pt')
         self.config.add_layout(
             '', context=Root, parent=None,
-            renderer='djed.layout:tests/test-layout-html.pt')
+            renderer='tests:test-layout-html.pt')
 
         root = Root()
         context1 = Context2(root)
@@ -116,7 +116,7 @@ class TestLayout(BaseTestCase):
 
     def test_layout_chain_parent_notfound(self):
         self.config.add_layout('', context=Context, parent='page',
-                               renderer='djed.layout:tests/test-layout.pt')
+                               renderer='tests:test-layout.pt')
 
         root = Root()
         context = Context(root)
@@ -234,7 +234,7 @@ class TestLayout(BaseTestCase):
         self.registry.settings['djed.layout.debug'] = True
 
         self.config.add_layout('test', view=View,
-                               renderer='djed.layout:tests/test-layout.pt')
+                               renderer='tests:test-layout.pt')
 
         rendr = LayoutRenderer('test')
         res = rendr('<h1>text</h1>', Context(), self.request)
@@ -246,7 +246,7 @@ class TestLayout(BaseTestCase):
         self.registry.settings['djed.layout.debug'] = True
 
         self.config.add_layout('test', view=View,
-                               renderer='djed.layout:tests/test-layout-html.pt')
+                               renderer='tests:test-layout-html.pt')
 
         rendr = LayoutRenderer('test')
         res = rendr('<h1>text</h1>', Context(), self.request)
@@ -257,10 +257,10 @@ class TestLayout(BaseTestCase):
     def test_layout_renderer(self):
 
         self.config.add_layout('test', view=View,
-                               renderer='djed.layout:tests/test-layout.pt')
+                               renderer='tests:test-layout.pt')
         self.config.add_view(
             name='view.html',
-            renderer='djed.layout:tests/view.pt',
+            renderer='tests:view.pt',
             layout='test')
 
         app = self.make_app()
@@ -280,7 +280,7 @@ class TestLayout(BaseTestCase):
         self.config.add_view(
             name='view.html', view=view, layout='test')
         self.config.add_layout(
-            'test', view=View, renderer='djed.layout:tests/test-layout.pt')
+            'test', view=View, renderer='tests:test-layout.pt')
 
         app = self.make_app()
 
@@ -302,7 +302,7 @@ class TestLayout(BaseTestCase):
         rendr = LayoutRenderer('test2')
         l = query_layout(Root(), Context(), self.request, 'test2')[0]
         res = rendr.layout_info(l, Context(), self.request, 'content')
-        self.assertIn('"layout-factory": "test_layout.View"', res)
+        self.assertIn('"layout-factory": "tests.test_layout.View"', res)
 
     def test_query_layout_no_request_iface(self):
 
