@@ -4,9 +4,10 @@ from zope import interface
 from pyramid.compat import text_
 from pyramid.interfaces import IRequest, IRouteRequest
 
+from djed.testing import BaseTestCase
+
 from djed.layout import query_layout
 from djed.layout import LayoutRenderer
-from .base import BaseTestCase
 
 class View(object):
 
@@ -19,6 +20,8 @@ class View(object):
 
 
 class TestLayout(BaseTestCase):
+
+    _includes = ('djed.layout', 'pyramid_chameleon')
 
     def test_default_settings(self):
 
